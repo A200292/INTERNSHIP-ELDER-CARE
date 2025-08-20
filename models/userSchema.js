@@ -5,7 +5,8 @@ const bcrypt = require("bcrypt");
 const userSchema = new Schema({
   name: { 
     type: String, 
-    required: true },
+    required: true,
+    trim: true },
 
   email: 
   { type: String,
@@ -15,9 +16,15 @@ const userSchema = new Schema({
   password: { 
     type: String,
      required: true,
+     trim: true,
      minlength: 8
   },
-
+    passwordConfirm:{
+        type: String,
+        minLength: 8,
+        trim: true,
+        required:[true, "please confirm your password"],
+    },
   role: { 
     type: String,
     required: true,

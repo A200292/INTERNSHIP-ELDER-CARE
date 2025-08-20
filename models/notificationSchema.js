@@ -8,7 +8,7 @@ const notificationSchema = new Schema({
     },
     recipientId: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'user',
         required: true
     },
     notificationType: {
