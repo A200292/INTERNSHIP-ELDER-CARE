@@ -12,16 +12,19 @@ const emergencyAlertRoute = require("./router/emergencyAlertRoute");
 const healthRecordRoute = require("./router/healthRecordRoute");
 const notificationRoute = require("./router/notificationRoute");
 const matchCriteriaRoute = require("./router/matchCriteriaRoute");
+const appointmentRoute = require("./router/appointmentRoute");
 
 // Middleware
 app.use(express.json());
 
 // Route handlers
 app.use("/api/user", userRoute);
+
 app.use("/api/sos", emergencyAlertRoute);
 app.use("/api/health", healthRecordRoute);
 app.use("/api/notifications", notificationRoute);
 app.use("/api/matchcriteria", matchCriteriaRoute);
+app.use("/api/appointment", appointmentRoute);
 
 // Start server
 app.listen(3000, () => {

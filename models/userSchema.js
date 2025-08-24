@@ -1,157 +1,98 @@
-const mongoose= require("mongoose");
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const bcrypt = require("bcrypt");
 
-const userSchema = new Schema({
-  name: { 
-    type: String, 
-    required: true,
-    trim: true },
-
-  email: 
-  { type: String,
-     required: true, 
-     unique: true 
+const userSchema = new Schema(
+  {
+    name: { 
+      type: String, 
+      required: true,
+      trim: true 
     },
-  password: { 
-    type: String,
-     required: true,
-     trim: true,
-     minlength: 8
-  },
-    passwordConfirm:{
-        type: String,
-        minLength: 8,
-        trim: true,
-        required:[true, "please confirm your password"],
+    email: { 
+      type: String,
+      required: true, 
+      unique: true,
+      lowercase: true,
+      trim: true
     },
-  role: { 
-    type: String,
-    required: true,
-    enum: ['elder', 'caregiver', 'family_member', 'admin']
-  },
-
-   roleDetails: {
+    password: { 
+      type: String,
+      required: [true, "Please provide a password"],
+      trim: true,
+      minlength: 8,
+      select: false // hide by default
+    },
+    passwordConfirm: {
+      type: String,
+      trim: true,
+      validate: {
+        // Only works on CREATE and SAVE
+        validator: function(el) {
+          return el === this.password;
+        },
+        message: "Passwords do not match"
+      }
+    },
+    role: { 
+      type: String,
+      required: true,
+      enum: ["elder", "caregiver", "family_member", "admin"]
+    },
+    roleDetails: {
       elder: {
-        dateOfBirth:{
-        type: Date
-        },    
-        phone:{
-        type: String
-        },
-        medicalConditions:{
-        type:[String]
-        },
-        emergencyContactIds: {
-        type: [ Schema.Types.ObjectId],
-        ref: "user"
-        },
-        medications: {
-            type: [String]
+        dateOfBirth: { type: Date },    
+        phone: { type: String },
+        medicalConditions: { type: [String] },
+        emergencyContactIds: { type: [Schema.Types.ObjectId], ref: "User" },
+        medications: { type: [String] }
       },
-    },
       caregiver: {
-        certifications: {
-            type: [String]
-      },
-        assignedElders:{
-        type: [ Schema.Types.ObjectId],
-        ref: "user"
-        },
-        phone: {
-        type: String
-        },
-        availability:[{
-            day:{
-                type: String},
-            startTime:{
-                type: String 
-            },
-            endTime:{
-                type: String 
-            },
-            
+        certifications: { type: [String] },
+        assignedElders: { type: [Schema.Types.ObjectId], ref: "User" },
+        phone: { type: String },
+        availability: [{
+          day: { type: String },
+          startTime: { type: String },
+          endTime: { type: String }
         }],
-      
-       matchCriteriaId:{
-          type:  Schema.Types.ObjectId,
-           ref: "MatchCriteria"
-        },
+        matchCriteriaId: { type: Schema.Types.ObjectId, ref: "MatchCriteria" }
       },
       family_member: {
-        relationshipToElder:{
-          type: String 
-         } ,
-        linkedElderIds: {
-        type: [ Schema.Types.ObjectId],
-        ref: "user"
-        },
-        phone: {
-          type: String 
-         } ,
-        },
-        admin: {
-        permissions: {
-          type:[String]
-        },
-       managedUsers:  {
-        type: [ Schema.Types.ObjectId],
-        ref: "user"
-        },
+        relationshipToElder: { type: String },
+        linkedElderIds: { type: [Schema.Types.ObjectId], ref: "User" },
+        phone: { type: String }
+      },
+      admin: {
+        permissions: { type: [String] },
+        managedUsers: { type: [Schema.Types.ObjectId], ref: "User" }
+      }
     },
-    createdAt: 
-   {
-    type: Date,
-    default: Date.now
+    passwordChangedAt: { type: Date }
   },
-    updatedAt: 
-     {
-    type: Date,
-    default: Date.now
-  },
-    passwordChangedAt: {
-    type: Date,
-    default: Date.now
-  },
-  },
-},
-  {timestamps: true}
-);
-//password hashed
-userSchema.pre("save", async function(next){
-    try{
-
-        if(!this.isModified("password"))
-        {
-            return next();
-        }
-        this.password = await bcrypt.hash(this.password, 12);
-        this.passwordConfirm = undefined;
-    
-}catch(err)
-{
-    console.log(err)
-}
-}
+  { timestamps: true }
 );
 
-userSchema.methods.checkPassword = async function (
-    candidatePassword,//entered by the user
-     userPassword// hashed in the database
-){
-    return await bcrypt.compare(candidatePassword, userPassword);
-    // compare returns true if both passwords are same
-    // or false when they are not
+// Hash password before saving
+userSchema.pre("save", async function(next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordConfirm = undefined; // remove confirm field
+  next();
+});
 
+// Instance method to check password
+userSchema.methods.checkPassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
-userSchema.method.passwordChangedAftertokenIssued = function(JWTtimestamp){
-   if(this.passwordChangedAt)//if changed then btfoot bl condition
-    {
-        const passwordChangedTime = parseInt(// change it to interger
-this.passwordChangedAt.getTime()/1000, 10); 
-return passwordChangedTime > JWTtimestamp;
-}
-return false;
+// Check if password changed after JWT issued
+userSchema.methods.passwordChangedAfter = function(JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
 };
+
 module.exports = mongoose.model("User", userSchema);
