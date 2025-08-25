@@ -6,6 +6,7 @@ exports.triggerSOS = async (req, res) => {
   try {
     const reqUser = req.user; 
     const { location } = req.body;
+    
 
     if (reqUser.role !== "elder") {
       return res.status(403)
@@ -37,21 +38,8 @@ exports.getActiveSOS = async (req, res) => {
       });
     }
 
-    let alerts;
-
-    if (reqUser.role === "family") {
-      // Only alerts for the linked elder
-      alerts = await EmergencyAlert.find({
-        elderId: reqUser.linkedElder,
-        status: "pending",
-      });
-    } else if (reqUser.role === "caregiver") {
-      // Only alerts for assigned elders
-      alerts = await EmergencyAlert.find({
-        elderId: { $in: reqUser.assignedElders || [] },//checks if a field’s value exists in an array.
-        status: "pending",
-      });
-    }
+    // Return all pending SOS for everyone
+    const alerts = await EmergencyAlert.find({ status: "pending" });
 
     res.json(alerts);
   } catch (err) {
@@ -78,19 +66,19 @@ exports.respondToSOS = async (req, res) => {
       return res.status(400).json({ message: "SOS already resolved" });
 
     // Verify user is linked to this elder
-    if (
-      reqUser.role === "family" &&
-      reqUser.linkedElder?.toString() !== sos.elderId.toString()
-    ) {
-      return res.status(403).json({ message: "Not linked to this elder" });
-    }
+    // if (
+    //   reqUser.role === "family" &&
+    //   reqUser.linkedElder?.toString() !== sos.elderId.toString()
+    // ) {
+    //   return res.status(403).json({ message: "Not linked to this elder" });
+    // }
 
-    if (
-      reqUser.role === "caregiver" &&
-      !reqUser.assignedElders?.includes(sos.elderId.toString())
-    ) {
-      return res.status(403).json({ message: "Not assigned to this elder" });
-    }
+    // if (
+    //   reqUser.role === "caregiver" &&
+    //   !reqUser.assignedElders?.includes(sos.elderId.toString())
+    // ) {
+    //   return res.status(403).json({ message: "Not assigned to this elder" });
+    // }
 
     sos.status = "resolved";
     sos.notes = notes || sos.notes;

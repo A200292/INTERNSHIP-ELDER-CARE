@@ -2,10 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const emergencyAlertSchema = new Schema({
-    emergencyAlertId:{
-        type: Schema.Types.ObjectId,
-        required: true
-    },
+    
     elderId: {
         type: Schema.Types.ObjectId,
         ref: "User",
