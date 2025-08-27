@@ -1,0 +1,175 @@
+/* General Page */
+.landing-page {
+  min-height: 100vh;
+  background-color: #60a5fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  padding: 16px;
+  position: relative;
+}
+
+/* SOS Button */
+.sos-btn {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background-color: #dc2626;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sos-btn:hover {
+  background-color: #b91c1c;
+}
+
+/* Logo + Title */
+.logo-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+}
+.logo {
+  width: 128px;
+  height: 128px;
+  border-radius: 8px;
+}
+.logo:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+}
+
+/* Intro Section: Side by Side */
+.intro-container {
+  display: flex;
+  max-width: 900px;
+  width: 100%;
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  gap: 40px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.intro-left {
+  width: 50%;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-weight: bold;
+  color: #0560f3;
+  font-size: 16px;
+}
+.intro-left:hover {
+  background-color: #fef3c7; /* light yellow */
+  transition: background 0.3s;
+}
+.intro-right {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+
+}
+.intro-right img:hover{
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.intro-right img {
+  max-width: 250px;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* Responsive: stack vertically on mobile */
+@media (max-width: 768px) {
+  .intro-container {
+    flex-direction: column;
+    text-align: center;
+  }
+  .intro-left, .intro-right {
+    width: 100%;
+  }
+  .intro-right img {
+    max-width: 200px;
+    margin-top: 16px;
+  }
+}
+
+/* Login Card */
+.login-card {
+  background-color: white;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+  border-radius: 24px;
+  padding: 32px;
+  width: 100%;
+  max-width: 384px;
+}
+.login-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1d4ed8;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.input {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 16px;
+  outline: none;
+}
+.input:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
+}
+
+/* Button */
+.btn {
+  background-color: #2563eb;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* Switch login/signup */
+.switch-text {
+  margin-top: 24px;
+  text-align: center;
+  color: #4b5563;
+  font-size: 14px;
+}
+.switch-btn {
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.switch-btn:hover {
+  text-decoration: underline;
+}

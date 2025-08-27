@@ -13,10 +13,16 @@ const healthRecordRoute = require("./router/healthRecordRoute");
 const notificationRoute = require("./router/notificationRoute");
 const matchCriteriaRoute = require("./router/matchCriteriaRoute");
 const appointmentRoute = require("./router/appointmentRoute");
-
+const cors = require('cors');
 // Middleware
 app.use(express.json());
 
+app.use(cors({
+  origin: "http://localhost:3001" // or whatever port your React app runs on
+}));
+app.get("/", (req, res) => {
+  res.send("API is working");
+});
 // Route handlers
 app.use("/api/user", userRoute);
 

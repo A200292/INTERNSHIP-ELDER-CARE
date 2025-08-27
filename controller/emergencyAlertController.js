@@ -66,19 +66,19 @@ exports.respondToSOS = async (req, res) => {
       return res.status(400).json({ message: "SOS already resolved" });
 
     // Verify user is linked to this elder
-    // if (
-    //   reqUser.role === "family" &&
-    //   reqUser.linkedElder?.toString() !== sos.elderId.toString()
-    // ) {
-    //   return res.status(403).json({ message: "Not linked to this elder" });
-    // }
+    if (
+      reqUser.role === "family" &&
+      reqUser.linkedElder?.toString() !== sos.elderId.toString()
+    ) {
+      return res.status(403).json({ message: "Not linked to this elder" });
+    }
 
-    // if (
-    //   reqUser.role === "caregiver" &&
-    //   !reqUser.assignedElders?.includes(sos.elderId.toString())
-    // ) {
-    //   return res.status(403).json({ message: "Not assigned to this elder" });
-    // }
+    if (
+      reqUser.role === "caregiver" &&
+      !reqUser.assignedElders?.includes(sos.elderId.toString())
+    ) {
+      return res.status(403).json({ message: "Not assigned to this elder" });
+    }
 
     sos.status = "resolved";
     sos.notes = notes || sos.notes;
