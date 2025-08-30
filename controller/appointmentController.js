@@ -1,5 +1,5 @@
 const Appointment = require("../models/appointmentSchema");
-console.log("Appointment model loaded:");
+
 const User = require("../models/userSchema");
 //  Elder / Family 
 exports.bookAppointment = async (req, res) => {

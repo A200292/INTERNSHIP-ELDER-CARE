@@ -1,107 +1,115 @@
 const User = require("../models/userSchema");
-const validator = require("validator");
 const jwt = require("jsonwebtoken");
-const { promisify } = require("util"); // FIXED typo
+const { promisify } = require("util");
 
-// Generate JWT
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+// Helper: Sign JWT
+const signToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
 };
 
-// Send JWT + user
-const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
-
-  res.status(statusCode).json({
-    status: "success",
-    token,
-    data: {
-      user,
-    },
-  });
-};
-
-// SIGNUP
+// ================= Signup =================
 exports.signup = async (req, res) => {
   try {
-    // Check duplicate email
-    const emailCheck = await User.findOne({ email: req.body.email });
-    if (emailCheck) {
+    const { name, email, password, passwordConfirm, role, roleDetails } = req.body;
+
+    // Validate password match
+    if (password !== passwordConfirm) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    // Normalize email
+    const normalizedEmail = email.toLowerCase();
+
+    // Check if user exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
       return res.status(409).json({ message: "Email already exists" });
     }
 
-    // Validate email format
-    if (!validator.isEmail(req.body.email)) {
-      return res.status(400).json({ message: "Invalid email!" });
-    }
-
-    // Passwords must match
-    if (req.body.password !== req.body.passwordConfirm) {
-      return res
-        .status(400)
-        .json({ message: "Password and passwordConfirm should match" });
-    }
-
-    // Create user
+    // Create user (password hashed automatically via schema pre-save)
     const newUser = await User.create({
-      name: req.body.name, // keep consistent with schema
-      email: req.body.email,
-      password: req.body.password,
-      role: req.body.role,
-      roleDetails: req.body.roleDetails,
+      name,
+      email: normalizedEmail,
+      password,
+      role,
+      roleDetails,
     });
 
-    createSendToken(newUser, 201, res);
+    // Sign JWT
+    const token = signToken(newUser._id, newUser.role);
+
+    res.status(201).json({
+      status: "success",
+      token,
+      data: {
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+        },
+      },
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// LOGIN
+// ================= Login =================
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check inputs
+    // Validate input
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Please provide email and password" });
+      return res.status(400).json({ message: "Please provide email and password" });
     }
 
-    // Check user
-    const user = await User.findOne({ email }).select("+password");
+    const normalizedEmail = email.toLowerCase();
+
+    // Find user and include password
+    const user = await User.findOne({ email: normalizedEmail }).select("+password");
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Check password
-    const isMatch = await user.checkPassword(password, user.password);
+    const isMatch = await user.checkPassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Incorrect email or password" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    createSendToken(user, 200, res);
+    // Sign token
+    const token = signToken(user._id, user.role);
+
+    res.status(200).json({
+      status: "success",
+      token,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// PROTECT MIDDLEWARE
+// ================= Protect Middleware =================
 exports.protect = async (req, res, next) => {
   try {
     let token;
 
-    // Get token from headers
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1]; // FIXED
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
     if (!token) {
@@ -109,37 +117,24 @@ exports.protect = async (req, res, next) => {
     }
 
     // Verify token
-    let decoded;
-    try {
-      decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    } catch (error) {
-      if (error.name === "JsonWebTokenError") {
-        return res.status(401).json({ message: "Invalid token" });
-      } else if (error.name === "TokenExpiredError") {
-        return res
-          .status(401)
-          .json({ message: "Session expired. Please log in again" });
-      }
-    }
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-    // Check user exists
+    // Check if user exists
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
       return res.status(401).json({ message: "User no longer exists" });
     }
 
-    // Check if password changed after token was issued
-    if (currentUser.passwordChangedAftertokenIssued(decoded.iat)) {
-      return res
-        .status(401)
-        .json({ message: "Password changed. Please log in again" });
+    // Check if password was changed after token issued
+    if (currentUser.passwordChangedAfterTokenIssued(decoded.iat)) {
+      return res.status(401).json({ message: "Password recently changed. Please login again." });
     }
 
-    // Attach user to request
+    // Grant access
     req.user = currentUser;
     next();
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: err.message });
+    res.status(401).json({ message: "Unauthorized: " + err.message });
   }
 };

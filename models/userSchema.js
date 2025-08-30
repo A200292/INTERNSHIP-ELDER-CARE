@@ -23,17 +23,6 @@ const userSchema = new Schema(
       minlength: 8,
       select: false // hide by default
     },
-    passwordConfirm: {
-      type: String,
-      trim: true,
-      validate: {
-        // Only works on CREATE and SAVE
-        validator: function(el) {
-          return el === this.password;
-        },
-        message: "Passwords do not match"
-      }
-    },
     role: { 
       type: String,
       required: true,
@@ -77,7 +66,6 @@ const userSchema = new Schema(
 userSchema.pre("save", async function(next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
-  this.passwordConfirm = undefined; // remove confirm field
   next();
 });
 
@@ -86,9 +74,8 @@ userSchema.methods.checkPassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// // Check if password changed after JWT issued
 // Check if password changed after JWT issued
-userSchema.methods.passwordChangedAftertokenIssued = function(JWTTimestamp) {
+userSchema.methods.passwordChangedAfterTokenIssued = function(JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
     return JWTTimestamp < changedTimestamp;

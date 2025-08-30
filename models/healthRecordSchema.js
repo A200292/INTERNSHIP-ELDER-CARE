@@ -3,10 +3,10 @@ const Schema = mongoose.Schema;
 
 const healthRecordSchema = new Schema({
     
-  HealthRecordId: {
-    type: Schema.Types.ObjectId,
-    ref: "user"
-},
+//   HealthRecordId: {
+//     type: Schema.Types.ObjectId,
+//     ref: "user"
+// },
     elderId:  {
     type: Schema.Types.ObjectId,
     ref: "user"

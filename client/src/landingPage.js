@@ -36,13 +36,18 @@ export default function LandingPage() {
     const email = e.target.email.value;
     const password = e.target.password.value;
     const passwordConfirm = e.target.passwordConfirm?.value;
-
     if (password !== passwordConfirm) {
       alert("Passwords do not match!");
       return;
     }
 
-    axios.post("http://localhost:3000/api/user/signup", { name, email, password, role })
+    axios.post("http://localhost:3000/api/user/signup", { 
+  name, 
+  email, 
+  password, 
+  passwordConfirm,   
+  role 
+})
       .then(res => { 
         alert("Signup successful! You can now log in.");
         setIsLogin(true);
